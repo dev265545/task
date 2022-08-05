@@ -59,8 +59,8 @@ export const AuthContextProvider = ({ children }) => {
           user_name: currentUser.displayName,
 
           background: "hero-pattern",
-          bubble: "gray-900",
-          text: "gray-100",
+          bubble: "black",
+          text: "white",
 
           timestamp: serverTimestamp(),
         });
