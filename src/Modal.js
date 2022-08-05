@@ -129,7 +129,7 @@ function Modal({ onClose, theme, user_id }) {
               <div className="px-6 pt-4 pb-2"></div>
             </div>
             <div className="max-w-sm p-2 rounded overflow-hidden shadow-lg">
-              <div className="w-full bg-pattern-4  h-[78.85px] "></div>
+              <div className="w-full bg-pattern-4 bg-orange-500 h-[78.85px] "></div>
               <div className="px-6 py-4"></div>{" "}
               {selected === "pattern-4" ? (
                 <button
