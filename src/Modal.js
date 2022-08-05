@@ -134,7 +134,7 @@ function Modal({ onClose, theme, user_id }) {
               {selected === "pattern-4" ? (
                 <button
                   onClick={() =>
-                    handleOnclick(["pattern-4", "orange-500", "black"])
+                    handleOnclick(["pattern-4", "blue-500", "black"])
                   }
                   className="rounded-full border-white border bg-white p-1 font-bold px-2 hover:bg-gray-300 "
                 >
@@ -143,7 +143,7 @@ function Modal({ onClose, theme, user_id }) {
               ) : (
                 <button
                   onClick={() =>
-                    handleOnclick(["pattern-4", "orange-500", "black"])
+                    handleOnclick(["pattern-4", "blue-500", "black"])
                   }
                   className="rounded-full border-white border bg-white p-1 font-bold px-2 hover:bg-gray-300 "
                 >
