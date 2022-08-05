@@ -17,10 +17,16 @@ function Message({ msg, id, user_id, text_color, bubble }) {
       <div className="flex items-end justify-end ">
         <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-end">
           <div>
-            <span className={messageclass}>{msg.msg}</span>
+            <span className={messageclass}>{msg?.msg}</span>
+          </div>
+          <div>
+            <img
+              src={msg?.image}
+              alt=""
+              className="rounded-2xl max-h-[700px] object-cover mr-2"
+            />
           </div>
         </div>
-        {/* <img src="https://images.unsplash.com/photo-1590031905470-a1a1feacbb0b?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144" alt="My profile" className="w-6 h-6 rounded-full order-2"> */}
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useContext, createContext, useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
-  signInWithPopup,
   signInWithRedirect,
   signOut,
   onAuthStateChanged,
@@ -27,7 +26,7 @@ export const AuthContextProvider = ({ children }) => {
       onSnapshot(query(collection(db, "users")), (snapshot) => {
         setUserset(snapshot.docs);
       }),
-    [db]
+    []
   );
 
   const googleSignIn = () => {

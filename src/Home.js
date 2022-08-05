@@ -1,38 +1,35 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
 import { UserAuth } from "../src/Context/AuthContext";
 import Message from "./Message";
-import { db } from "../src/firebase";
+import { db, storage } from "../src/firebase";
 import { onSnapshot, collection, query } from "@firebase/firestore";
 import ScrollToBottom from "react-scroll-to-bottom";
 import {
   addDoc,
   doc,
-  getDocs,
-  getDoc,
-  where,
   serverTimestamp,
   updateDoc,
   orderBy,
-  // getDoc,
-  // setDoc,
 } from "@firebase/firestore";
-//import { Link } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
-import useChatScroll from "./chatscroll";
-import { MdInvertColors } from "react-icons/md";
+
+import {
+  MdClose,
+  MdInvertColors,
+  MdPerson,
+  MdPhotoAlbum,
+} from "react-icons/md";
 import Modal from "./Modal";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
 
 const Home = ({ pattern }) => {
   const { user, logOut, current } = UserAuth();
 
   const navigate = useNavigate();
 
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState();
   const [posts, setPosts] = useState([]);
-  const [owner, setuser] = useState([]);
-  const ref = useChatScroll(posts);
-
-  let userpost = useRef([]);
 
   useEffect(() => {
     if (user === null || undefined) {
@@ -53,25 +50,9 @@ const Home = ({ pattern }) => {
       );
     }
   }, [user]);
-
-  // useEffect(() => {
-  //   const q = query(collection(db, "users"), where("id", "==", user?.uid));
-
-  //   const querySnapshot = getDocs(q);
-  //   querySnapshot.forEach((doc) => {
-  //     // doc.data() is never undefined for query doc snapshots
-  //     console.log(doc.id, " => ", doc.data());
-  //   });
-  // }, [user]);
-  // const [current, setCurrent] = useState([]);
-  // useEffect(() => {
-  //   if (user?.uid !== undefined) {
-  //     userpost.current = owner.map(
-  //       (post) => post.data().id === user?.uid && post.data()
-  //     );
-  //     setCurrent(userpost[0]);
-  //   }
-  // }, [owner, user]);
+  const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const filePickerRef = useRef(null);
 
   const sendPost = async () => {
     const docRef = await addDoc(collection(db, "users", user?.uid, "posts"), {
@@ -85,8 +66,35 @@ const Home = ({ pattern }) => {
     await updateDoc(doc(db, "users", user?.uid, "posts", docRef.id), {
       id: docRef.id,
     });
+    const imageRef = ref(
+      storage,
+      `users/${user?.uid}/posts/${docRef.id}/image`
+    );
+
+    if (selectedFile) {
+      await uploadString(imageRef, selectedFile, "data_url").then(async () => {
+        const downloadURL = await getDownloadURL(imageRef);
+        await updateDoc(doc(db, "users", user?.uid, "posts", docRef.id), {
+          image: downloadURL,
+        });
+      });
+    }
+
+    setLoading(false);
 
     setInput("");
+
+    setSelectedFile(null);
+  };
+  const addImageToPost = (e) => {
+    const reader = new FileReader();
+    if (e.target.files[0]) {
+      reader.readAsDataURL(e.target.files[0]);
+    }
+
+    reader.onload = (readerEvent) => {
+      setSelectedFile(readerEvent.target.result);
+    };
   };
 
   const backgroundClass = "h-screen bg-" + current?.background;
@@ -95,9 +103,11 @@ const Home = ({ pattern }) => {
   const text_color = current?.text;
 
   const [modalOpen, setModalOpen] = useState(false);
+
   const handleOnclose = () => {
     setModalOpen(false);
   };
+
   const handleSignOut = async () => {
     try {
       await logOut();
@@ -113,8 +123,8 @@ const Home = ({ pattern }) => {
           <div className=" ">
             <button className="p-1 " onClick={handleSignOut}>
               <img
-                className="rounded-full w-10 "
-                src={user.photoURL}
+                className="rounded-md w-12 "
+                src={current?.user_img}
                 alt="user_img"
               />
             </button>
@@ -141,72 +151,98 @@ const Home = ({ pattern }) => {
             />
           )}
         </div>
+        <div className="flex-1" onClick={() => navigate("/account")}>
+          {" "}
+          <MdPerson className=" w-10 h-10   " />
+        </div>
       </div>
 
       <div className="flex-1 p:2 sm:p-6  justify-end flex flex-col h-screen">
-        <div
-          ref={ref}
-          id="messages"
-          className="flex flex-col items-start gap-2 overflow-y-scroll pb-4 space-y-4 p-2 scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
-        >
-          <div className="chat-message p-1">
-            <div className="flex items-start justify-start ">
-              <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-start">
-                <div>
-                  <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none   bg-gray-400 text-gray-100">
-                    Hi ! {current?.user_name} 👋
-                  </span>
-                </div>
-                <div>
-                  <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-400 text-gray-100">
-                    I am Wysa an AI bot built by therapist
-                  </span>
-                </div>
-                <div>
-                  <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-400 text-gray-100">
-                    I am here to understand your concerns and connect you with
-                    the best resource available to support you.
-                  </span>
-                </div>
-                <div>
-                  <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-400 text-gray-100">
-                    Can I help ?
-                  </span>
+        <div className="overflow-y-scroll scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch ">
+          <ScrollToBottom>
+            <div id="messages" className="flex flex-col items-start gap-1 ">
+              <div className="chat-message p-1">
+                <div className="flex items-end justify-end ">
+                  <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-start">
+                    <div>
+                      <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-200 text-gray-800">
+                        Hi! there 👋
+                      </span>
+                    </div>
+                    <div>
+                      <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-200 text-gray-800">
+                        I am Wysa an AI bot built by therapist
+                      </span>
+                    </div>
+                    <div>
+                      <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-200 text-gray-800">
+                        I am here to understand your concerns and connect you
+                        with the best resource available to support you.
+                      </span>
+                    </div>
+                    <div>
+                      <span className="px-4 py-2  font-medium rounded-lg inline-block rounded-br-none bg-gray-200 text-gray-800">
+                        Can I help ?
+                      </span>
+                    </div>
+                  </div>
+                  {/* <img src="https://images.unsplash.com/photo-1590031905470-a1a1feacbb0b?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144" alt="My profile" className="w-6 h-6 rounded-full order-2"> */}
                 </div>
               </div>
-              {/* <img src="https://images.unsplash.com/photo-1590031905470-a1a1feacbb0b?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=facearea&amp;facepad=3&amp;w=144&amp;h=144" alt="My profile" className="w-6 h-6 rounded-full order-2"> */}
             </div>
-          </div>
-        </div>
-        <div
-          ref={ref}
-          id="messages"
-          className="flex flex-col items-end gap-2 overflow-y-scroll pb-4 space-y-4 p-2 scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
-        >
-          <ScrollToBottom>
-            {posts.map((post) => (
-              <Message
-                key={post.id}
-                id={post.id}
-                msg={post.data()}
-                user_id={user?.uid}
-                text_color={text_color}
-                bubble={bubble}
-              />
-            ))}
+            <div id="messages" className="flex flex-col items-end gap-1  ">
+              {posts.map((post) => (
+                <Message
+                  key={post.id}
+                  id={post.id}
+                  msg={post.data()}
+                  user_id={user?.uid}
+                  text_color={text_color}
+                  bubble={bubble}
+                />
+              ))}
+            </div>
           </ScrollToBottom>
         </div>
+
         <div className=" border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-          <div className="relative flex">
+          {selectedFile && (
+            <div className="relative">
+              <div
+                className="absolute w-8 h-8 bg-[#15181c] hover:bg-[#272c26] bg-opacity-75 rounded-full flex items-center justify-center top-1 left-1 cursor-pointer"
+                onClick={() => setSelectedFile(null)}
+              >
+                <MdClose className="text-white h-5" />
+              </div>
+              <img
+                src={selectedFile}
+                alt=""
+                className="rounded-2xl max-h-80 object-contain"
+              />
+            </div>
+          )}
+
+          <div className="  sticky  flex">
+            <div className="icon" onClick={() => filePickerRef.current.click()}>
+              <MdPhotoAlbum className="text-[#1d9bf0] h-10 w-10" />
+              <input
+                type="file"
+                ref={filePickerRef}
+                hidden
+                onChange={addImageToPost}
+              />
+            </div>
             <input
               onChange={(e) => setInput(e.target.value)}
               type="text"
               value={input}
               placeholder="Write your message!"
               className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-12 bg-gray-200 rounded-md py-3"
-            />{" "}
+            />
+
             <div className="absolute right-0 items-center inset-y-0 sm:flex">
               <button
+                disabled={!input && !selectedFile}
                 onClick={sendPost}
                 type="button"
                 className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"

@@ -1,16 +1,11 @@
 import { doc, updateDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+
+import React, { useState } from "react";
 import { db } from "./firebase";
 
 function Modal({ onClose, theme, user_id }) {
   const [selected, setSelected] = useState(theme);
-  // useEffect(() => {
-  //   setSelected(theme);
-  //   console.log(theme);
-  //   console.log(selected);
-  // }, [theme, selected]);
 
-  const background = ["pattern_1.png", "pattern_2.png"];
   const handleOnclick = (pattern) => {
     setSelected(pattern[0]);
     updateDoc(doc(db, "users", user_id), {
@@ -21,7 +16,12 @@ function Modal({ onClose, theme, user_id }) {
   };
 
   return (
-    <div className=" overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full">
+    <div
+      id="defaultModal"
+      tabIndex="-1"
+      aria-hidden="true"
+      className="   backdrop-blur-sm overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 w-full md:inset-0 h-modal md:h-full"
+    >
       <div className="relative p-4 w-full max-w-2xl h-full md:h-auto">
         <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
           <div className="flex justify-between items-start p-4 rounded-t border-b dark:border-gray-600">
@@ -29,7 +29,6 @@ function Modal({ onClose, theme, user_id }) {
               Theme Selector
             </h3>
             <button
-              onClick={() => onClose()}
               type="button"
               className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
               data-modal-toggle="defaultModal"
@@ -50,6 +49,7 @@ function Modal({ onClose, theme, user_id }) {
               <span className="sr-only">Close modal</span>
             </button>
           </div>
+
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white p-3">
             Themes
           </h3>
